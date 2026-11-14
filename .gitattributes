@@ -1,0 +1,11 @@
+# Fin de línea LF para todo texto (evita la polución CRLF del interludio Windows).
+* text=auto eol=lf
+*.png binary
+*.xlsx binary
+*.xlsm binary
+
+# Las fuentes vendorizadas se versionan BYTE A BYTE. La normalización eol=lf de
+# arriba reescribe los finales de línea CRLF de algunos crates (p. ej. quick-xml)
+# y eso corrompe los checksums de cargo (.cargo-checksum.json), rompiendo el build
+# offline en un checkout limpio. No tocar los finales de línea de vendor/.
+vendor/** -text

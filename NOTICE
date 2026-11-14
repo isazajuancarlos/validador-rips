@@ -1,0 +1,34 @@
+validador-rips
+Copyright © 2026 Juan Carlos Isaza. Todos los derechos reservados.
+
+Autor y titular de los derechos patrimoniales:
+
+    Juan Carlos Isaza
+    isazajuancarlos@gmail.com
+    Medellín, Colombia
+
+«Xiliux» es el nombre comercial bajo el que se desarrolla y se ofrece este
+software. NO es una persona jurídica: el titular de los derechos es la persona
+natural nombrada arriba, y así debe constar en todo contrato, cesión o registro.
+
+--------------------------------------------------------------------------------
+DATOS NORMATIVOS INCORPORADOS
+--------------------------------------------------------------------------------
+
+`datos/campos_fev948.json` es la lista de campos de cada arreglo de servicios de
+un FEV-RIPS, extraída del Documento Técnico 1 de la Resolución 948 de 2026 del
+Ministerio de Salud y Protección Social de Colombia. Es normativa pública: no es
+obra protegida de nadie. Se vendoriza para que el validador funcione sin red, y
+se regenera cuando el Ministerio actualice el documento.
+
+`datos/dominios948.json` son las tablas de dominio CERRADAS de esos mismos campos
+enumerados (finalidad de la tecnología en salud, causa/motivo de atención, vía de
+ingreso, condición y destino del egreso, tipo de documento de identificación):
+los códigos que cada campo admite. Salen de las tablas de referencia (`REFs_*`)
+del contenedor `fevrips-db` del validador FEV-RIPS oficial del Ministerio, también
+normativa pública. Se derivan del artefacto ya verificado del proyecto médico
+—que las extrae de ese contenedor— y se vendorizan por la misma razón: que el
+validador funcione sin red, y se regeneran cuando el Ministerio actualice las
+tablas. NO se incorporan los catálogos externos grandes (CIE-11, CUPS, CUM) ni la
+tabla de cruce finalidad×CUPS: la validación de valor se limita a la pertenencia a
+lista cerrada corta, no a las reglas del MUV.

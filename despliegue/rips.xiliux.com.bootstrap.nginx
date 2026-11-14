@@ -1,0 +1,24 @@
+# rips.xiliux.com — vhost de ARRANQUE (solo :80), para obtener el primer cert.
+#
+# El problema huevo-gallina: el vhost final tiene un bloque :443 que referencia
+# /etc/letsencrypt/live/rips.xiliux.com/fullchain.pem, y ese archivo no existe
+# hasta que certbot lo emita; pero certbot --webroot necesita que nginx SIRVA el
+# reto en http://rips.xiliux.com/.well-known/acme-challenge/ desde /var/www/html.
+# Un vhost final que no carga (cert ausente) tumba `nginx -t` y deja a certbot sin
+# por dónde responder.
+#
+# Este archivo rompe el ciclo: SOLO :80, sin referencia a ningún cert, así que
+# `nginx -t` pasa y el reto se sirve. Secuencia:
+#   1) instalar ESTE como sites-available/rips.xiliux.com.nginx, enlazar, reload
+#   2) certbot certonly --webroot -w /var/www/html -d rips.xiliux.com
+#   3) instalar el vhost COMPLETO (rips.xiliux.com.nginx) encima, reload
+# El paso 3 lo hace `desplegar-tls.sh`.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name rips.xiliux.com;
+
+    location /.well-known/acme-challenge/ { root /var/www/html; }
+    location / { return 301 https://$host$request_uri; }
+}

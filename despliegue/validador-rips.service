@@ -1,0 +1,38 @@
+; validador-rips — pre-vuelo público de RIPS (rips.xiliux.com).
+;
+; Servicio SIN ESTADO y SIN SALIDA A RED: recibe un RIPS subido, lo valida en
+; memoria y lo descarta. No escribe archivos (nada al disco), no abre conexiones
+; salientes (no es como bochica, que descarga la política del usuario). Por eso va
+; MÁS encerrado: solo escucha su socket local, y ni siquiera necesita resolver DNS.
+[Unit]
+Description=validador-rips — pre-vuelo de RIPS 948 (rips.xiliux.com)
+After=network.target
+
+[Service]
+Type=simple
+User=validador-rips
+Group=validador-rips
+Environment=VRIPS_ADDR=127.0.0.1:8096
+ExecStart=/opt/validador-rips/web
+Restart=on-failure
+RestartSec=3
+
+; Endurecimiento: público y sin estado. No escribe NADA en disco, no sale a red.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/validador-rips
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+; Solo el socket TCP local que nginx consume. Nada más.
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target

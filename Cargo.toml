@@ -1,0 +1,74 @@
+# SPDX-FileCopyrightText: 2026 Juan Carlos Isaza
+# SPDX-License-Identifier: LicenseRef-Propietario
+[package]
+name = "validador-rips"
+version = "0.1.0"
+edition = "2024"
+license = "LicenseRef-Propietario"
+authors = ["Juan Carlos Isaza"]
+description = "Valida un FEV-RIPS (Resolución 948 de 2026) ANTES de enviarlo al MUV: caza los campos que MinSalud rechazaría por estructura, faltantes o no permitidos."
+repository = "file:///mnt/data/espejos/validador-rips.git"
+readme = "README.md"
+publish = false
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# --- La web autoservicio, tras un `feature` ---
+# El NÚCLEO (`Validador`, `Falta`) es la unidad vendible y se queda PURO: solo
+# serde. Ese es el punto probado del spike (la validación es una rebanada limpia,
+# sin arrastrar servidor). La pantalla `sube tu RIPS → qué rechazaría MinSalud`
+# es un segundo consumidor, y su stack —axum + maud + htmx (directiva 26)— entra
+# SOLO con `--features web`. Sin la bandera, quien dependa de este crate como
+# librería no se traga ni axum ni tokio (comprobado: `cargo tree` sin `web` no los
+# lista). El binario `web` la exige (`required-features`), así que no hay fuga de
+# feature-gate: no existe sin su stack.
+axum = { version = "0.7", features = ["multipart"], optional = true }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"], optional = true }
+maud = { version = "0.26", features = ["axum"], optional = true }
+# Lector .xlsx/.xlsm PURO Rust (sin deps nativas, offline): convierte la plantilla
+# oficial de MinSalud (SPConvertidorJSON) a la estructura FEV-RIPS. Tras su propio
+# feature `xlsx` para que el núcleo de validación siga siendo solo serde.
+calamine = { version = "0.26", optional = true }
+
+[features]
+# El convertidor Excel→JSON, reusable sin la web.
+xlsx = ["dep:calamine"]
+# La pantalla arrastra el convertidor (sube Excel → convierte → valida).
+web = ["xlsx", "dep:axum", "dep:tokio", "dep:maud"]
+
+[[bin]]
+name = "web"
+required-features = ["web"]
+
+[dev-dependencies]
+# El arnés de navegador (directiva 28): un producto con pantalla nace con su banco
+# de extremo a extremo, y con htmx eso EXIGE navegador —un `hx-swap` correcto en el
+# sitio equivocado devuelve el mismo 200—. `mirilla` habla CDP por tubería; es
+# `dev-dependency`, no entra en el binario. Mismo `rev` que informes y medico.
+mirilla = { git = "file:///home/juan/espejos/mirilla.git", rev = "c7de2e8" }
+# Escritor .xlsx PURO Rust: el banco de conversión FABRICA una plantilla sintética
+# en memoria (sin PII: nada de archivos RIPS reales en el repo) y la convierte. Solo
+# de pruebas, no entra en el binario.
+rust_xlsxwriter = "0.79"
+
+# --- Estándar de nacimiento (directiva 26) ---
+# Las dependencias optimizadas también en debug.
+[profile.dev.package."*"]
+opt-level = 3
+
+# ⚠️ NO añadir `panic = "abort"` a NINGÚN perfil de abajo.
+# `conversion.rs:104-110` depende del DESENROLLADO (`panic = "unwind"`, el defecto):
+# la conversión de un `.xlsx` anónimo corre bajo `std::panic::catch_unwind`
+# (conversion.rs:111-115) para que un pánico interno de calamine ante entrada
+# adversaria (zip corrupto, XML malformado, dimensiones mentirosas) se mapee a un
+# error amable en vez de tumbar el proceso. Con `panic = "abort"` ese `catch_unwind`
+# se vuelve un no-op y un `.xlsx` malo abortaría todo el servidor.
+# Lo vigila el test `la_estrategia_de_panico_es_unwind` (src/pruebas.rs).
+
+# PUERTA de buenas prácticas (no aviso): el CI corre `-D warnings`, así que aquí
+# solo entra lo que se está dispuesto a BLOQUEAR y que `clippy --fix` limpia a cero.
+[lints.clippy]
+redundant_clone = "deny"
+needless_collect = "deny"

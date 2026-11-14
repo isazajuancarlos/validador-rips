@@ -1,0 +1,12 @@
+# Vendorizado: el build NO resuelve de la red (mitiga la clase CVE-2026-5223/33056).
+# Las fuentes viven en vendor/ (versionado). Ruta RELATIVA al repo.
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source."git+file:///home/juan/espejos/mirilla.git?rev=c7de2e8"]
+git = "file:///home/juan/espejos/mirilla.git"
+rev = "c7de2e8"
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "vendor"

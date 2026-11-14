@@ -1,10 +1,25 @@
-Copyright (c) 2026 Juan Carlos Isaza. All rights reserved.
+Licencia propietaria — validador-rips
+SPDX-License-Identifier: LicenseRef-Propietario
 
-This repository is the public home of a proprietary product. The documentation
-here may be read and shared. The software itself is NOT released under an
-open-source license: no license is granted to use, copy, modify, or distribute
-the software or its source code, which is not published here.
+Copyright © 2026 Juan Carlos Isaza. Todos los derechos reservados.
 
-To use, evaluate, or license the product, contact the author via https://xiliux.com.
+Este software y su documentación son obra de Juan Carlos Isaza. No es
+software libre ni de código abierto: no se concede ninguna licencia por el mero
+acceso al código.
 
-THE DOCUMENTATION IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+QUEDA PROHIBIDO, salvo autorización previa, expresa y escrita del titular:
+
+  1. Usar, ejecutar o desplegar el software, en todo o en parte.
+  2. Copiarlo, reproducirlo o distribuirlo por cualquier medio.
+  3. Modificarlo, adaptarlo o crear obras derivadas.
+  4. Realizar ingeniería inversa, descompilarlo o desensamblarlo.
+  5. Sublicenciarlo, cederlo, arrendarlo o publicarlo.
+
+El uso por un prestador de servicios de salud o cualquier tercero se rige por el
+contrato de licencia comercial suscrito con el titular. A falta de contrato, no
+hay licencia.
+
+DEPENDENCIAS DE TERCEROS
+
+Este software incorpora bibliotecas de terceros con sus propias licencias
+libres, que se conservan íntegras y no se ven afectadas por este documento.

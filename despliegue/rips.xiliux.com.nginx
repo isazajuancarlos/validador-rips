@@ -1,0 +1,70 @@
+# rips.xiliux.com — pre-vuelo público de RIPS (Resolución 948).
+#
+# Se copia a /etc/nginx/sites-available/ y se enlaza en sites-enabled/. El bloque
+# TLS lo añade/gestiona certbot tras crear el registro DNS (mismo patrón que
+# bochica/medico/informes): este archivo se instala DESPUÉS de que el certificado
+# exista, y no se deja reescribir por certbot para no perder el limit_req.
+
+# Zona general de navegación.
+limit_req_zone $binary_remote_addr zone=rips_gen:10m rate=10r/s;
+
+# Zona ESTRECHA para /validar: cada POST parsea y valida un JSON que puede pesar
+# decenas de MiB — trabajo real de CPU. 2 r/s con ráfaga de 5 basta para un uso
+# humano (revisar un archivo, arreglar, revisar de nuevo) y corta el bucle
+# automatizado. El tope de tamaño lo ponen client_max_body_size (aquí) y el
+# DefaultBodyLimit del binario (64 MiB), alineados.
+limit_req_zone $binary_remote_addr zone=rips_val:10m rate=2r/s;
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name rips.xiliux.com;
+
+    location /.well-known/acme-challenge/ { root /var/www/html; }
+    location / { return 301 https://$host$request_uri; }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name rips.xiliux.com;
+
+    # ssl_certificate y ssl_certificate_key los pone/gestiona certbot.
+    ssl_certificate     /etc/letsencrypt/live/rips.xiliux.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/rips.xiliux.com/privkey.pem;
+
+    # Cabeceras de seguridad para un sitio público que recibe subidas.
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options DENY always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    # CSP estricta: la app no tiene NINGÚN script inline —htmx y boi van servidos
+    # aparte—, así que `script-src 'self'` es la segunda barrera contra XSS
+    # (defensa en profundidad sobre el escapado de maud). El único inline es el
+    # <style> de la envoltura → `style-src 'unsafe-inline'`. `form-action 'self'`
+    # y `base-uri 'none'` cierran el resto.
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'none'" always;
+
+    # Alineado con el DefaultBodyLimit del binario (64 MiB): un RIPS mensual de
+    # muchos usuarios puede pesar. nginx corta antes de que el cuerpo llegue al
+    # proceso, así que es la primera barrera de tamaño.
+    client_max_body_size 64m;
+
+    location = /validar {
+        limit_req zone=rips_val burst=5 nodelay;
+        proxy_pass http://127.0.0.1:8096;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        limit_req zone=rips_gen burst=20 nodelay;
+        proxy_pass http://127.0.0.1:8096;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
